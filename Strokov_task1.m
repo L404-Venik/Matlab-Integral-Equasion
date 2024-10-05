@@ -35,13 +35,13 @@ Y0 = [-4; 0; 0];  % y(0) = -4, z1(0) = 0, z2(0) = 0
 Y_diff = 2*Y(:,2) + Y(:,3) + 20*x - 4;
 
 figure;
-plot(x, Y_diff, '-r', 'DisplayName', 'y(x)');
+plot(x, Y_diff, '-b', 'DisplayName', 'Y_{diff}(x)');
 hold on;
-plot(x, Y(:,2), '-b', 'DisplayName', 'z1(x)');
-plot(x, Y(:,3), '-g', 'DisplayName', 'z2(x)');
+%plot(x, Y(:,2), '-b', 'DisplayName', 'z1(x)');
+%plot(x, Y(:,3), '-g', 'DisplayName', 'z2(x)');
 xlabel('x');
 ylabel('Значения функций');
-title('Решение системы ОДУ');
+%title('Решение системы ОДУ');
 legend show;
 grid on;
 
@@ -55,30 +55,20 @@ Y_interp(1) = -4; % Начальное условие при x=0, исходя �
 
 % Итерационный метод решения
 tol = 1e-6; % Точность
-maxIter = 100; % Максимальное число итераций
 
-for iter = 1:maxIter
-    y_old = Y_interp;
-    for i = 2:Nx+1
-        sum_integral = 0;
-        for j = 1:i-1
-            sum_integral = sum_integral + K(x(i),x(j)) * Y_interp(j);
-        end
-        integral_value = h * sum_integral;
-        Y_interp(i) = integral_value + 20*x(i) - 4;
+for i = 2:Nx+1
+    sum_integral = 0;
+    for j = 1:i-1
+        sum_integral = sum_integral + K(x(i),x(j)) * Y_interp(j);
     end
-    % Условие выхода
-    if norm(Y_interp - y_old, inf) < tol
-        iter;
-        break;
-    end
+    Y_interp(i) = (20*x(i) - 4 + h * sum_integral) / (1 - h * K(x(i),x(i)));
 end
 
 % Построение графика
-plot(x, Y_interp, 'LineWidth', 2);
+plot(x, Y_interp, '-g', 'DisplayName', 'Y_{interp}(x)');
 xlabel('x');
 ylabel('y(x)');
-title('Решение интегрального уравнения Вольтерра');
+%title('Решение интегрального уравнения Вольтерра');
 grid on;
 
 % Y_err = ;
