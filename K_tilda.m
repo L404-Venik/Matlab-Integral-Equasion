@@ -1,2 +1,3 @@
 function K = K_tilda(x,t) 
-K = 2*exp(x-t) + 3 * exp(3*(x-t)) + sin(10*pi*x);
+d = 1/10 * 3;
+K = 2*exp(x-t) + 3 * exp(3*(x-t)) + d * sin(10*pi*x);

@@ -2,75 +2,91 @@ clc
 clear
 close all
 
+tic
+
 % ПЕРЕМЕННЫЕ
 a = 0;
 b = 1;
-Nx = 100;
+Nx = 11;
 X_span = linspace(a,b,Nx);
 
 
 % РЕШЕНИЕ СИСТЕМЫ ОДУ, ПОЛУЧЕННОЙ ИЗ ИНТЕГРАЛЬНОГО УРАВНЕНИЯ
 
-function dYdx = ode_system(x, Y)
-    % Y(1) = y(x), Y(2) = z1(x), Y(3) = z2(x)
+function dYdx = ode_second_order(x, Y)
     
-    y = Y(1);
-    z1 = Y(2);
-    z2 = Y(3);
+    dydx = Y(1);
+    y = Y(2);
     
-    % Правые части системы
-    dy_dx = 2*z1 + z2 + 20*x - 4;  % y'(x)
-    dz1_dx = y + z1;               % z1'(x)
-    dz2_dx = y + 3*z2;             % z2'(x)
-    
-    % Вектор производных
-    dYdx = [dy_dx; dz1_dx; dz2_dx];
+    dYdx = [7 * dydx - 10 * y - 20;
+            dydx];
 end
 
 % Начальные условия
-Y0 = [-4; 0; 0];  % y(0) = -4, z1(0) = 0, z2(0) = 0
+Y0 = [8; -4];  % y'(0) = 8, y(0) = -4
 
-[x, Y] = ode45(@ode_system, X_span, Y0);
+[x, Y] = ode45(@ode_second_order, X_span, Y0);
 
-Y_diff = 2*Y(:,2) + Y(:,3) + 20*x - 4;
+Y_analytical = 4 * exp(5.*X_span) - 6 * exp(2.*X_span) - 2;
+Y_diff = Y(:,2);
 
 figure;
-plot(x, Y_diff, '-b', 'DisplayName', 'Y_{diff}(x)');
 hold on;
+legend('Location','northwest');
+plot(x, Y_diff, '-b', 'DisplayName', 'Y_{diff}(x)','LineWidth',2);
+plot(x, Y_analytical, '-r', 'DisplayName', 'Y_{analytical}(x)','LineWidth',2, 'LineStyle','--');
 %plot(x, Y(:,2), '-b', 'DisplayName', 'z1(x)');
 %plot(x, Y(:,3), '-g', 'DisplayName', 'z2(x)');
-xlabel('x');
-ylabel('Значения функций');
 %title('Решение системы ОДУ');
-legend show;
-grid on;
 
 
 % РЕШЕНИЕ ИНТЕГРАЛЬНОГО УРАВНЕНИЯ ИТЕРАЦИОННЫМ МЕТОДОМ
 
 h = (b - a) / Nx; % Шаг сетки
-x = linspace(a, b, Nx+1); % Сетка по x
+x = linspace(a, b, Nx); % Сетка по x
 Y_interp = zeros(size(x)); % Начальное приближение для y
-Y_interp(1) = -4; % Начальное условие при x=0, исходя из того, что y(0) = -4 (если предполагаемое начальное значение)
+Y_interp(1) = 20 * a -4; % Начальное условие при x=0, исходя из того, что y(0) = -4 (если предполагаемое начальное значение)
 
-% Итерационный метод решения
-tol = 1e-6; % Точность
+Ky = 0;
 
-for i = 2:Nx+1
-    sum_integral = 0;
-    for j = 1:i-1
-        sum_integral = sum_integral + K(x(i),x(j)) * Y_interp(j);
+for i = 2:Nx
+    Y_interp(i) = (20*x(i) - 4 + h * Ky) / (1 - h * K(x(i),x(i)));
+
+    if( i < Nx)
+        Ky = Ky + K(x(i+1),x(i))*Y_interp(i);
     end
-    Y_interp(i) = (20*x(i) - 4 + h * sum_integral) / (1 - h * K(x(i),x(i)));
 end
 
 % Построение графика
-plot(x, Y_interp, '-g', 'DisplayName', 'Y_{interp}(x)');
+plot(x, Y_interp, '-g', 'DisplayName', 'Y_{interp}(x)','LineWidth',2);
 xlabel('x');
 ylabel('y(x)');
 %title('Решение интегрального уравнения Вольтерра');
 grid on;
 
-% Y_err = ;
+
+% Поиск максимума
+abs_K = abs(K(X_span,X_span));
+[max_value, max_index] = max(abs_K(:));
+
+
+% РЕШЕНИЕ ИНТЕГРАЛЬНОГО УРАВНЕНИЯ С ПОГРЕШНОСТЬЮ ИТЕРАЦИОННЫМ МЕТОДОМ
+
+Y_err = zeros(size(x)); % Начальное приближение для y
+Y_err(1) = 20 * a -4; % Начальное условие при x=0, исходя из того, что y(0) = -4 (если предполагаемое начальное значение)
+
+Ky_tilda = 0;
+
+for i = 2:Nx
+    Y_err(i) = (20*x(i) - 4 + h * Ky_tilda) / (1 - h * K_tilda(x(i),x(i)));
+
+    if( i < Nx)
+        Ky_tilda = Ky_tilda + K_tilda(x(i+1),x(i))*Y_err(i);
+    end
+end
+
+plot(x, Y_err, '-c', 'DisplayName', 'Y_{err}(x)','LineWidth',2);
 % discr_1 = sum(abs(Y_diff - Y_interp)) ;
 % discr_2 = sum(abs(Y_diff - Y_err)) ;
+
+toc
