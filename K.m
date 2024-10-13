@@ -1,2 +1,2 @@
-function K = K(x,t) 
-K = 2*exp(x-t) + exp(3*(x-t));
+function result = K(x,t) 
+result = 2*exp(x-t) + exp(3*(x-t));

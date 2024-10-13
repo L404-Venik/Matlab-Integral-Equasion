@@ -1,3 +1,4 @@
-function K = K_tilda(x,t) 
+function result = K_tilda(x,t) 
+%d = 1/10 * max(abs(K(x, t)));
 d = 1/10 * 3;
-K = 2*exp(x-t) + 3 * exp(3*(x-t)) + d * sin(10*pi*x);
+result = 2*exp(x-t) + exp(3*(x-t)) + d * sin(13*pi*x);
