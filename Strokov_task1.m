@@ -7,7 +7,7 @@ tic
 % ПЕРЕМЕННЫЕ
 a = 0;
 b = 1;
-Nx = 11;
+Nx = 500;
 X_span = linspace(a,b,Nx);
 
 
@@ -18,7 +18,7 @@ function dYdx = ode_second_order(x, Y)
     dydx = Y(1);
     y = Y(2);
     
-    dYdx = [7 * dydx - 10 * y - 20;
+    dYdx = [7 * dydx - 10 * y + 60*x - 92;
             dydx];
 end
 
@@ -27,7 +27,8 @@ Y0 = [8; -4];  % y'(0) = 8, y(0) = -4
 
 [x, Y] = ode45(@ode_second_order, X_span, Y0);
 
-Y_analytical = 4 * exp(5.*X_span) - 6 * exp(2.*X_span) - 2;
+%Y_analytical = 4 * exp(5.*X_span) - 6 * exp(2.*X_span) - 2;
+Y_analytical = exp(2.*X_span) + 6 .*X_span - 5;
 Y_diff = Y(:,2);
 
 %% РЕШЕНИЕ ИНТЕГРАЛЬНОГО УРАВНЕНИЯ ИТЕРАЦИОННЫМ МЕТОДОМ
@@ -36,15 +37,12 @@ h = (b - a) / (Nx-1); % Шаг сетки
 x = linspace(a, b, Nx); % Сетка по x
 Y_interp = zeros(size(x)); % Начальное приближение для y
 Y_interp(1) = 20 * a -4; % Начальное условие при x=0, исходя из того, что y(0) = -4 (если предполагаемое начальное значение)
+Y_interp(2) = (20*x(2)-4)/(1-h*K(x(2),x(2)));
 
-Ky = 0;
-
-for i = 2:Nx
-    Y_interp(i) = ((20*x(i) - 4) + h * Ky) / (1 - h * K(x(i),x(i)));
+for i = 3:Nx
     
-    if( i < Nx)
-        Ky = Ky + K(x(i+1),x(i))*Y_interp(i);
-    end
+    Y_interp(i) = ((20*x(i) - 4) + h *sum( K(x(i),x(2:(i-1))) .* Y_interp(2:(i-1)))) / (1 - h * K(x(i),x(i)));
+    
 end
 
 % Интерполяция значений найденных итерационно
@@ -60,14 +58,9 @@ abs_K = abs(K(X_span,X_span));
 Y_err = zeros(size(x)); % Начальное приближение для y
 Y_err(1) = 20 * a -4; % Начальное условие при x=0, исходя из того, что y(0) = -4 (если предполагаемое начальное значение)
 
-Ky_tilda = 0;
-
 for i = 2:Nx
-    Y_err(i) = (20*x(i) - 4 + h * Ky_tilda) / (1 - h * K_tilda(x(i),x(i)));
-
-    if( i < Nx)
-        Ky_tilda = Ky_tilda + K_tilda(x(i+1),x(i))*Y_err(i);
-    end
+    Y_err(i) = (20*x(i) - 4 + h * sum( K_tilda(x(i),x(2:(i-1))) .* Y_err(2:(i-1))))...
+    / (1 - h * K_tilda(x(i),x(i)));
 end
 
 Y_err = polyval(polyfit(x, Y_err, 3), x);
@@ -109,7 +102,7 @@ legend('Location','northwest');
 plot(x, Y_diff, '-b', 'DisplayName', 'Y_{diff}(x)','LineWidth',2);
 plot(x, Y_analytical, '-r', 'DisplayName', 'Y_{analytical}(x)','LineWidth',2, 'LineStyle','--');
 plot(x, Y_interp, '-g', 'DisplayName', 'Y_{interp}(x)','LineWidth',2);
-plot(x, Y_err, '-c', 'DisplayName', 'Y_{err}(x)','LineWidth',2,'LineStyle','--');
+plot(x, Y_err, '-k', 'DisplayName', 'Y_{err}(x)','LineWidth',2,'LineStyle','--');
 
 xlabel('x', 'FontName', 'Times New Roman', 'FontSize', 16);
 ylabel('y(x)', 'FontName', 'Times New Roman', 'FontSize', 16);
